@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicConnect ER Diagram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .diagram-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2 style="text-align: center; color: #1e293b; margin-bottom: 30px;">CivicConnect Entity-Relationship (ER) Diagram</h2>
+        <div class="mermaid">
+            erDiagram
+                USERS {
+                    string aadhaar PK
+                    string name
+                    string phone
+                    string password
+                }
+                
+                REPORTS {
+                    string id PK
+                    string category
+                    string description
+                    float latitude
+                    float longitude
+                    string imagePath
+                    string timestamp
+                    string status
+                    string department
+                    string priority
+                    int feedbackRating
+                    string feedbackMessage
+                    int upvotes
+                    int hasUpvoted
+                }
+                
+                ACCIDENTS {
+                    string id PK
+                    string imagePath
+                    float latitude
+                    float longitude
+                    string description
+                    string timestamp
+                    string status
+                }
+                
+                NOTIFICATIONS {
+                    string id PK
+                    string title
+                    string message
+                    string timestamp
+                    int isRead
+                }
+                
+                %% Relationships
+                USERS ||--o{ REPORTS : "creates"
+                USERS ||--o{ ACCIDENTS : "reports"
+                USERS ||--o{ NOTIFICATIONS : "receives"
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

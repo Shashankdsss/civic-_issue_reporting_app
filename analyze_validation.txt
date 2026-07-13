@@ -1,0 +1,6 @@
+﻿Analyzing report_screen.dart, image_validation_service.dart...
+
+warning - lib\services\image_validation_service.dart:1:8 - Unused import: 'dart:io'. Try removing the import directive. - unused_import
+   info - lib\screens\report_screen.dart:174:28 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+
+2 issues found.

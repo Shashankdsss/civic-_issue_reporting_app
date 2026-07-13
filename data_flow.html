@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicConnect Data Flow Diagram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .diagram-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            max-width: 90vw;
+            overflow-x: auto;
+        }
+        .legend {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #475569;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2 style="text-align: center; color: #1e293b; margin-bottom: 30px;">CivicConnect Data Flow Diagram (DFD)</h2>
+        <div class="mermaid">
+            flowchart TD
+                %% Define Styles
+                classDef entity fill:#3B82F6,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:5px,ry:5px;
+                classDef process fill:#10B981,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:20px,ry:20px;
+                classDef datastore fill:#F59E0B,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+                
+                %% Entities
+                User[Citizen User]:::entity
+                Authority[Municipal Authority / Admin]:::entity
+                
+                %% Processes (Circles/Rounded)
+                P1((1. Authenticate<br>User)):::process
+                P2((2. Process<br>Civic Issue)):::process
+                P3((3. Process<br>Accident SOS)):::process
+                P4((4. Update<br>Status & Feedback)):::process
+                P5((5. Dispatch<br>Notifications)):::process
+                P6((6. Community<br>Interactions)):::process
+                
+                %% Data Stores (Cylinders/Rectangles)
+                D1[(D1: users<br>Collection)]:::datastore
+                D2[(D2: reports<br>Collection)]:::datastore
+                D3[(D3: accidents<br>Collection)]:::datastore
+                D4[(D4: notifications<br>Collection)]:::datastore
+                
+                %% Data Flows
+                %% Auth
+                User -->|Aadhaar, Phone, Password| P1
+                P1 -->|Read / Write Credentials| D1
+                
+                %% Issue Reporting
+                User -->|Category, Image, Location, Dept| P2
+                P2 -->|Save New Report| D2
+                D2 -->|Fetch History| User
+                
+                %% Accident Reporting
+                User -->|Severity, Image, Location, Description| P3
+                P3 -->|Save Emergency Data| D3
+                
+                %% Status Management
+                Authority -->|Verify, In Progress, Resolved| P4
+                User -->|Feedback Rating 1-5| P4
+                P4 -->|Update Status / Rating| D2
+                
+                %% Notifications
+                P4 -->|Trigger Status Change Event| P5
+                P5 -->|Save Alert| D4
+                D4 -->|Unread Alerts| User
+                
+                %% Community
+                User -->|Toggle Upvote| P6
+                P6 -->|Increment/Decrement Upvotes| D2
+                D2 -->|Fetch Feed| User
+        </div>
+        
+        <div class="legend">
+            <strong>Legend:</strong>
+            <div class="legend-item" style="margin-top: 10px;">
+                <div class="color-box" style="background-color: #3B82F6;"></div> External Entities (People)
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #10B981; border-radius: 50%;"></div> Processes (System Logic)
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #F59E0B;"></div> Data Stores (Firestore DB)
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

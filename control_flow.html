@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicConnect Control Flow Diagram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .diagram-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2 style="text-align: center; color: #1e293b; margin-bottom: 30px;">CivicConnect Control Flow Diagram</h2>
+        <div class="mermaid">
+            graph TD
+                %% Define Styles
+                classDef entry fill:#1E293B,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:10px,ry:10px;
+                classDef auth fill:#3B82F6,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:10px,ry:10px;
+                classDef main fill:#059669,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:10px,ry:10px;
+                classDef subs fill:#F59E0B,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:10px,ry:10px;
+                classDef action fill:#E11D48,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF,rx:10px,ry:10px;
+
+                %% Entry Point
+                Start((App Launch)):::entry --> Init[main.dart<br>Initial Route: /login]:::entry
+                
+                %% Authentication Flow
+                subgraph Authentication Flow
+                    Init --> Login[Login Screen]:::auth
+                    Login -- Don't have an account? --> Register[Register Screen]:::auth
+                    Register -- Back to Login --> Login
+                end
+                
+                %% Main Application Flow
+                subgraph Main Dashboard
+                    Login -- "Login Success" --> MainApp[Main Screen<br>Bottom Navigation]:::main
+                    MainApp -.->|Tab 0| Home[Home Screen]:::main
+                    MainApp -.->|Tab 1| History[History Screen]:::main
+                    MainApp -.->|Tab 2| Community[Community Screen]:::main
+                end
+                
+                %% Home Screen Capabilities
+                subgraph Home Features
+                    Home -- "Tap Notifications" --> Notifications[Notification Screen]:::subs
+                    Notifications -- "Back" --> Home
+                    
+                    Home -- "Tap Category" --> Report[Report Issue Screen]:::action
+                    Report -- "Submit / Cancel" --> Home
+                    
+                    Home -- "Tap SOS Button" --> Accident[Accident Report Screen]:::action
+                    Accident -- "Submit / Cancel" --> Home
+                    
+                    Home -- "Logout" --> Login
+                end
+                
+                %% History Screen Capabilities
+                subgraph History Features
+                    History -- "Tap Report Card" --> Tracking[Status Tracking Screen]:::subs
+                    Tracking -- "Back" --> History
+                end
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>
