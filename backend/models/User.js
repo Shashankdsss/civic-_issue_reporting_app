@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema({
   otherDetails: { type: String, default: '' },
   region: { type: String, default: 'Unknown' },
   lastLogin: { type: Date, default: null },
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  role: { type: String, enum: ['citizen', 'admin'], default: 'citizen' },
+  department: { type: String, default: '' }
 }, {
   timestamps: true
 });

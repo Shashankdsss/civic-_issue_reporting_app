@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FirestoreService {
-  static const String baseUrl = 'https://shashank.hungercat.in/api';
+  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
 
   // ── CIVIC ISSUE REPORTS ────────────────────────────────────────────────────
 

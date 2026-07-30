@@ -67,7 +67,12 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, userId: user.id });
+        res.json({ 
+          token, 
+          userId: user.id,
+          role: user.role,
+          department: user.department 
+        });
       }
     );
   } catch (err) {

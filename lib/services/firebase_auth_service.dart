@@ -8,7 +8,7 @@ class CustomUser {
 }
 
 class FirebaseAuthService {
-  static const String baseUrl = 'https://shashank.hungercat.in/api';
+  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
   static CustomUser? _currentUser;
   
   static CustomUser? get currentUser => _currentUser;
