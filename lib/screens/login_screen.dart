@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String _selectedRole = 'Citizen'; // Default role
 
   @override
   void initState() {
@@ -67,13 +68,17 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = await FirebaseAuthService.loginUser(email, pass);
+      final user = await FirebaseAuthService.loginUser(email, pass, _selectedRole.toLowerCase());
       if (!mounted) return;
 
       if (user != null) {
         await _saveCredentials(email, pass);
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/');
+        if (user.role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin');
+        } else {
+          Navigator.pushReplacementNamed(context, '/');
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -250,6 +255,41 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderSide: const BorderSide(color: buttonBlue, width: 2),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Role Selection ──
+                      Text(
+                        "Login As",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedRole,
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.admin_panel_settings_outlined, color: Colors.grey[500]),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                          ),
+                        ),
+                        items: ['Citizen', 'Admin']
+                            .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedRole = val);
+                        },
                       ),
 
                       // ── Forgot Password ──

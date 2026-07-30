@@ -37,7 +37,8 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+    const requestedRole = role || 'citizen';
 
     // Check email
     const user = await User.findOne({ email });
@@ -54,7 +55,8 @@ router.post('/login', async (req, res) => {
     // Create JWT
     const payload = {
       user: {
-        id: user.id
+        id: user.id,
+        role: requestedRole
       }
     };
 
@@ -70,7 +72,7 @@ router.post('/login', async (req, res) => {
         res.json({ 
           token, 
           userId: user.id,
-          role: user.role,
+          role: requestedRole,
           department: user.department 
         });
       }

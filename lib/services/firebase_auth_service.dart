@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomUser {
   final String uid;
-  CustomUser(this.uid);
+  final String role;
+  CustomUser(this.uid, {this.role = 'citizen'});
 }
 
 class FirebaseAuthService {
@@ -49,26 +50,29 @@ class FirebaseAuthService {
     }
   }
 
-  static Future<CustomUser?> loginUser(String email, String password) async {
+  static Future<CustomUser?> loginUser(String email, String password, String requestedRole) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
         'password': password,
+        'role': requestedRole,
       }),
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['token'];
       final userId = data['userId'];
+      final role = data['role'] ?? 'citizen';
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('jwt_token', token);
       await prefs.setString('user_id', userId);
+      await prefs.setString('user_role', role);
       await prefs.setBool('is_logged_in', true);
 
-      _currentUser = CustomUser(userId);
+      _currentUser = CustomUser(userId, role: role);
       return _currentUser;
     } else {
        try {

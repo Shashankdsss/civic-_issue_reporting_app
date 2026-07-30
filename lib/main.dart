@@ -10,6 +10,7 @@ import 'screens/accident_report_screen.dart';
 import 'screens/chatbot_screen.dart';
 import 'screens/analytics_screen.dart';
 import 'screens/drafts_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 import 'services/notification_service.dart';
 import 'utils/global_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,12 +21,14 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+  final userRole = prefs.getString('user_role') ?? 'citizen';
 
   final isDark = prefs.getBool('darkMode') ?? false;
   GlobalState.themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
   GlobalState.languageNotifier.value = prefs.getString('language') ?? 'English';
 
-  runApp(CivicIssueApp(initialRoute: isLoggedIn ? '/' : '/login'));
+  final route = !isLoggedIn ? '/login' : (userRole == 'admin' ? '/admin' : '/');
+  runApp(CivicIssueApp(initialRoute: route));
 }
 
 class CivicIssueApp extends StatelessWidget {
@@ -90,6 +93,7 @@ class CivicIssueApp extends StatelessWidget {
                 '/chat': (context) => const ChatbotScreen(),
                 '/analytics': (context) => const AnalyticsScreen(),
                 '/drafts': (context) => const DraftsScreen(),
+                '/admin': (context) => const AdminDashboardScreen(),
               },
             );
           },
