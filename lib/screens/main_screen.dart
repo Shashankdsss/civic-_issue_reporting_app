@@ -201,7 +201,60 @@ class _MainScreenState extends State<MainScreen> {
           _onItemTapped(0); // Go back to Home Tab instead of closing app
           return false; // Prevent exit
         }
-        return true; // Exits app if currently on Home tab
+        
+        // Show exit confirmation dialog
+        final bool shouldExit = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Text(
+              "Exit App",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2D4A3E), // Dark green text
+              ),
+            ),
+            content: Text(
+              "Are you sure you want to exit the app?",
+              style: GoogleFonts.poppins(
+                color: Colors.grey[700],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  "No",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D4A3E),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC63F3F), // Red background
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                ),
+                child: Text(
+                  "Yes",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ?? false;
+        
+        return shouldExit;
       },
       child: Scaffold(
       body: PageView(

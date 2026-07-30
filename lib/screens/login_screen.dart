@@ -53,25 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final pass = _passController.text.trim();
 
-    if (email.isEmpty) {
+    if (email.isEmpty || pass.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please enter your email"),
+          content: const Text("Please enter both email and password"),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      return;
-    }
-
-    if (pass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Please enter your password"),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -95,7 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(e.toString().replaceAll('Exception: ', '')),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } finally {
@@ -105,190 +91,306 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryBlue = Color(0xFF1E40AF); // Deep premium blue for the top bg
+    const buttonBlue = Color(0xFF2563EB);  // Slightly brighter blue for buttons
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
+      backgroundColor: primaryBlue,
+      body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Container(
-              height: MediaQuery.of(context).size.height * 0.4,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E293B),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                  bottomRight: Radius.circular(50),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.location_city, size: 80, color: Colors.white),
-                  const SizedBox(height: 15),
-                  Text(
-                    "CivicConnect",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Official Public Reporting Tool",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Login Card ───────────────────────────────────────────────────
-            Transform.translate(
-              offset: const Offset(0, -50),
+            // ── Top Header Section ───────────────────────────────────────────
+            Expanded(
+              flex: 3,
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 25),
-                padding: const EdgeInsets.all(30),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
+                width: double.infinity,
+                color: primaryBlue,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Squircle Logo inside container
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.location_city_rounded,
+                        size: 45,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
                     Text(
-                      "Welcome Back",
+                      "CivicConnect",
                       style: GoogleFonts.poppins(
-                        fontSize: 22,
+                        color: Colors.white,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Official Public Reporting Tool",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                    // ── Email Field ───────────────
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: Colors.transparent,
-                              width: 2,
-                            ),
+            // ── Bottom Sheet Section ─────────────────────────────────────────
+            Expanded(
+              flex: 7,
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(35),
+                    topRight: Radius.circular(35),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 35),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Welcome Back 👋",
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Sign in to continue to your dashboard",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 35),
+
+                      // ── Email Field ──
+                      Text(
+                        "Email",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: "citizen@example.com",
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[500]),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
-                          child: TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              counterText: "",
-                              hintText: "Email Address",
-                              prefixIcon: const Icon(
-                                Icons.email,
-                                color: Color(0xFF3B82F6),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: buttonBlue, width: 2),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 20),
 
-                    const SizedBox(height: 20),
-
-                    // ── Password Field ────────────────────────────────────────
-                    TextField(
-                      controller: _passController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        hintText: "Password",
-                        prefixIcon:
-                            const Icon(Icons.lock, color: Color(0xFF3B82F6)),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: Colors.grey,
+                      // ── Password Field ──
+                      Text(
+                        "Password",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _passController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          hintText: "••••••••",
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[500]),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: Colors.grey[500],
+                            ),
+                            onPressed: () {
+                              setState(() => _obscurePassword = !_obscurePassword);
+                            },
                           ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: buttonBlue, width: 2),
+                          ),
+                        ),
+                      ),
+
+                      // ── Forgot Password ──
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
                           onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // ── Login Button ──────────────────────────────────────────
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size(double.infinity, 55),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              "LOGIN",
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                title: Text(
+                                  "Reset Password", 
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                                ),
+                                content: Text(
+                                  "Password resets are currently handled by system administrators. Please contact support or your local municipality office to reset your password.",
+                                  style: GoogleFonts.poppins(color: Colors.grey[700]),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text(
+                                      "OK", 
+                                      style: GoogleFonts.poppins(color: buttonBlue, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
                               ),
+                            );
+                          },
+                          child: Text(
+                            "Forgot Password?",
+                            style: GoogleFonts.poppins(
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
                             ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Register Link ───────────────────────────────────────────────
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: RichText(
-                text: TextSpan(
-                  text: "New User? ",
-                  style: GoogleFonts.poppins(color: Colors.grey[700]),
-                  children: [
-                    TextSpan(
-                      text: "Register Here",
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF3B82F6),
-                        fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 15),
+
+                      // ── Sign In Button ──
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: buttonBlue,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          minimumSize: const Size(double.infinity, 55),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : Text(
+                                "Sign In",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 25),
+
+                      // ── OR Divider ──
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 15),
+                            child: Text(
+                              "or",
+                              style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+
+                      // ── Continue as Guest Button ──
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.explore_outlined, color: Color(0xFF334155)),
+                        onPressed: () {
+                          // Bypass auth and go to main dashboard as guest
+                          Navigator.pushReplacementNamed(context, '/');
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 55),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        label: Text(
+                          "Continue as Guest",
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF334155),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+
+                      // ── Register Link ──
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/register'),
+                          child: RichText(
+                            text: TextSpan(
+                              text: "Don't have an account? ",
+                              style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 14),
+                              children: [
+                                TextSpan(
+                                  text: "Sign Up",
+                                  style: GoogleFonts.poppins(
+                                    color: buttonBlue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),

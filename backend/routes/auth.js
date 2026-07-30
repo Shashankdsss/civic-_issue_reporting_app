@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error during registration." });
   }
 });
 
@@ -58,6 +58,9 @@ router.post('/login', async (req, res) => {
       }
     };
 
+    // Record login time without triggering full document schema validation
+    await User.updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } });
+
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
@@ -69,14 +72,13 @@ router.post('/login', async (req, res) => {
     );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error during login." });
   }
 });
 
 // Get current User profile info
 router.get('/me', async (req, res) => {
   try {
-    // Note: Usually you have an auth middleware to extract user from token. For simplicity, passing uid via header or param
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ error: 'No token provided' });
     const token = authHeader.split(' ')[1];
@@ -87,7 +89,7 @@ router.get('/me', async (req, res) => {
     
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error fetching user." });
   }
 });
 

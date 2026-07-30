@@ -13,6 +13,7 @@ import 'profile_screen.dart';
 import '../utils/global_state.dart';
 import '../services/notification_service.dart';
 import '../services/status_simulation_service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,30 +28,31 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _profileImagePath;
   int _unreadNotifications = 0;
   int _pendingDraftsCount = 0;
+  
+  bool _isLoading = true;
 
-  Future<void> _fetchDraftsCount() async {
-    final drafts = await DraftService.getDrafts();
-    if (mounted) setState(() => _pendingDraftsCount = drafts.length);
-  }
-
-  Future<void> _fetchUnreadCount() async {
-    final count = await FirestoreService.getUnreadNotificationCount();
-    if (mounted) setState(() => _unreadNotifications = count);
-  }
-
-  @override
-  void initState() {
-    super.initState();
+  Future<void> _initializeData() async {
     // Request notification permissions now that the UI is built
     NotificationService.requestPermission();
     // Catch up any missed background progressions
     StatusSimulationService.catchUpMissedUpdates();
     
-    _fetchUserDetails();
-    _fetchUserLocation();
-    _fetchUnreadCount();
-    _fetchProfileImage();
-    _fetchDraftsCount();
+    await Future.wait([
+      _fetchUserDetails(),
+      _fetchUserLocation(),
+      _fetchUnreadCount(),
+      _fetchProfileImage(),
+      _fetchDraftsCount(),
+      Future.delayed(const Duration(milliseconds: 800)), // Assures shimmer lasts enough to feel premium
+    ]);
+    
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
   }
 
   Future<void> _fetchUserLocation({bool showToast = false}) async {
@@ -96,6 +98,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     final path = prefs.getString('profile_image_path');
     if (mounted) setState(() => _profileImagePath = path);
+  }
+
+  Future<void> _fetchDraftsCount() async {
+    final drafts = await DraftService.getDrafts();
+    if (mounted) setState(() => _pendingDraftsCount = drafts.length);
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    final count = await FirestoreService.getUnreadNotificationCount();
+    if (mounted) setState(() => _unreadNotifications = count);
   }
 
   @override
@@ -197,101 +209,110 @@ class _HomeScreenState extends State<HomeScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 25.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: _isLoading
+            ? Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: IgnorePointer(child: _buildMainScrollContent()),
+              )
+            : _buildMainScrollContent(),
+      ),
+    );
+  }
 
-              // ── DRAFTS BANNER ──
-              if (_pendingDraftsCount > 0) ...[
-                _buildDraftsBanner(),
-                const SizedBox(height: 25),
-              ],
+  Widget _buildMainScrollContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 25.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── DRAFTS BANNER ──
+          if (_pendingDraftsCount > 0) ...[
+            _buildDraftsBanner(),
+            const SizedBox(height: 25),
+          ],
 
-              // ── LOCALITY OVERVIEW ──
-              Text(tr("Locality Overview"), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-              const SizedBox(height: 15),
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: FirestoreService.getReports(),
-                builder: (context, snapshot) {
-                  int reported = snapshot.hasData ? snapshot.data!.length : 0;
-                  int inProgress = snapshot.hasData ? snapshot.data!.where((r) => r['status'] == 'In Progress' || r['status'] == 'Pending').length : 0;
-                  int resolved = snapshot.hasData ? snapshot.data!.where((r) => r['status'] == 'Resolved').length : 0;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatBox("$reported", tr("Total reported"), const Color(0xFFFFE4E6), const Color(0xFFE11D48), Icons.report),
-                      _buildStatBox("$inProgress", tr("In progress"), const Color(0xFFFEF3C7), const Color(0xFFD97706), Icons.engineering),
-                      _buildStatBox("$resolved", tr("Resolved"), const Color(0xFFD1FAE5), const Color(0xFF059669), Icons.check_circle),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // ── ANALYTICS CARD ──
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/analytics'),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1E293B), Color(0xFF334155)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(color: const Color(0xFF3B82F6).withAlpha(40), blurRadius: 18, offset: const Offset(0, 8)),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: const Color(0xFF3B82F6).withAlpha(40), shape: BoxShape.circle),
-                        child: const Icon(Icons.bar_chart_rounded, color: Color(0xFF3B82F6), size: 26),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Ward Analytics', style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                            Text('Charts · Status · Category breakdown', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-
-              // ── REPORT AN ISSUE ──
-              Text(tr("Report an Issue"), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-              const SizedBox(height: 15),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                childAspectRatio: 0.70,
+          // ── LOCALITY OVERVIEW ──
+          Text(tr("Locality Overview"), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+          const SizedBox(height: 15),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: FirestoreService.getReports(),
+            builder: (context, snapshot) {
+              int reported = snapshot.hasData ? snapshot.data!.length : 0;
+              int inProgress = snapshot.hasData ? snapshot.data!.where((r) => r['status'] == 'In Progress' || r['status'] == 'Pending').length : 0;
+              int resolved = snapshot.hasData ? snapshot.data!.where((r) => r['status'] == 'Resolved').length : 0;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildCategoryItem(Icons.construction, "Roads (Pothole)", const Color(0xFFF1F5F9), const Color(0xFF475569)),
-                  _buildCategoryItem(Icons.water_damage, "Water Leakage", const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
-                  _buildCategoryItem(Icons.delete_sweep, "Garbage", const Color(0xFFECFCCB), const Color(0xFF65A30D)),
-                  _buildCategoryItem(Icons.waves, "Drainage", const Color(0xFFFFEDD5), const Color(0xFFEA580C)),
-                  _buildCategoryItem(Icons.tungsten, "Street Light", const Color(0xFFFEF08A), const Color(0xFFCA8A04)),
+                  _buildStatBox("$reported", tr("Total reported"), const Color(0xFFFFE4E6), const Color(0xFFE11D48), Icons.report),
+                  _buildStatBox("$inProgress", tr("In progress"), const Color(0xFFFEF3C7), const Color(0xFFD97706), Icons.engineering),
+                  _buildStatBox("$resolved", tr("Resolved"), const Color(0xFFD1FAE5), const Color(0xFF059669), Icons.check_circle),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+
+          // ── ANALYTICS CARD ──
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/analytics'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFF3B82F6).withAlpha(40), blurRadius: 18, offset: const Offset(0, 8)),
                 ],
               ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: const Color(0xFF3B82F6).withAlpha(40), shape: BoxShape.circle),
+                    child: const Icon(Icons.bar_chart_rounded, color: Color(0xFF3B82F6), size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Ward Analytics', style: GoogleFonts.poppins(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                        Text('Charts · Status · Category breakdown', style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // ── REPORT AN ISSUE ──
+          Text(tr("Report an Issue"), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+          const SizedBox(height: 15),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 3,
+            mainAxisSpacing: 15,
+            crossAxisSpacing: 15,
+            childAspectRatio: 0.70,
+            children: [
+              _buildCategoryItem(Icons.construction, "Roads (Pothole)", const Color(0xFFF1F5F9), const Color(0xFF475569)),
+              _buildCategoryItem(Icons.water_damage, "Water Leakage", const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
+              _buildCategoryItem(Icons.delete_sweep, "Garbage", const Color(0xFFECFCCB), const Color(0xFF65A30D)),
+              _buildCategoryItem(Icons.waves, "Drainage", const Color(0xFFFFEDD5), const Color(0xFFEA580C)),
+              _buildCategoryItem(Icons.tungsten, "Street Light", const Color(0xFFFEF08A), const Color(0xFFCA8A04)),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -401,3 +422,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+

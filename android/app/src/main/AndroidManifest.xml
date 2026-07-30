@@ -38,6 +38,7 @@
     <application
         android:label="civicissue"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/launcher_icon">
         
         <activity

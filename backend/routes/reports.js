@@ -1,76 +1,82 @@
 const express = require('express');
 const Report = require('../models/Report');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
+
+// Middleware to protect routes
+const auth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No token provided" });
+  
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user;
+    next();
+  } catch (e) {
+    res.status(401).json({ error: "Token is not valid" });
+  }
+};
+
+// Create a new report
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, description, location, severity, imageUrl } = req.body;
+    
+    const newReport = new Report({
+      title,
+      description,
+      location,
+      severity,
+      imageUrl,
+      userId: req.user.id
+    });
+    
+    const report = await newReport.save();
+    res.json(report);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 // Get all reports
 router.get('/', async (req, res) => {
   try {
-    const reports = await Report.find().sort({ createdAt: -1 });
-    // Map _id to id for backwards compatibility with flutter app
-    const mappedReports = reports.map(r => {
-      const doc = r.toObject();
-      doc.id = doc._id.toString();
-      return doc;
-    });
-    res.json(mappedReports);
+    const reports = await Report.find().sort({ createdAt: -1 }).populate('userId', 'firstName lastName');
+    res.json(reports);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
-// Insert new report
-router.post('/', async (req, res) => {
+// Get reports by User ID
+router.get('/my-reports', auth, async (req, res) => {
   try {
-    const newReport = new Report(req.body);
-    const report = await newReport.save();
-    res.status(201).json({ id: report._id, message: "Report added successfully" });
+    const reports = await Report.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    res.json(reports);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
-// Delete a report
-router.delete('/:id', async (req, res) => {
-  try {
-    await Report.findByIdAndDelete(req.params.id);
-    res.json({ message: "Report deleted" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Update Report Status
+// Update Report Status (usually for admin, but leaving unprotected for demo purpose)
 router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    await Report.findByIdAndUpdate(req.params.id, {
-      $set: { status },
-      $set: { [`statusHistory.${status}`]: new Date() }
-    });
-    res.json({ message: "Status updated" });
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      { $set: { status } },
+      { new: true }
+    );
+    res.json(report);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server Error" });
   }
-});
-
-// Upvote a report
-router.post('/:id/upvote', async (req, res) => {
-  try {
-    const report = await Report.findById(req.params.id);
-    if(report) {
-      report.upvotes += 1;
-      await report.save();
-    }
-    res.json({ message: "Upvoted" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  } 
 });
 
 module.exports = router;

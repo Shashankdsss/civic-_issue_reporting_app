@@ -181,12 +181,13 @@ class _CommunityScreenState extends State<CommunityScreen> with SingleTickerProv
 
   Future<void> _inviteContacts() async {
     const message = 'Hey! Join me on CivicConnect — the app that lets you report civic issues like potholes, garbage & more in your neighborhood. Download now and let\'s make our city better together! 🏙️';
-    final uri = Uri(scheme: 'sms', queryParameters: {'body': message});
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
+    final String encodedMessage = Uri.encodeComponent(message);
+    final Uri whatsappUrl = Uri.parse("whatsapp://send?text=$encodedMessage");
+    try {
+      await launchUrl(whatsappUrl);
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open messaging app.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not launch WhatsApp. Is it installed?')));
       }
     }
   }
@@ -199,13 +200,13 @@ class _CommunityScreenState extends State<CommunityScreen> with SingleTickerProv
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+            colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: const Color(0xFF3B82F6).withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 8)),
+            BoxShadow(color: const Color(0xFF22C55E).withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 8)),
           ],
         ),
         child: Row(
@@ -213,7 +214,7 @@ class _CommunityScreenState extends State<CommunityScreen> with SingleTickerProv
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-              child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 26),
+              child: const Icon(Icons.share, color: Colors.white, size: 26),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -222,14 +223,14 @@ class _CommunityScreenState extends State<CommunityScreen> with SingleTickerProv
                 children: [
                   Text('Invite Your Neighbors!', style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  Text('Share CivicConnect via SMS', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
+                  Text('Share CivicConnect via WhatsApp', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-              child: Text('INVITE', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+              child: Text('WHATSAPP', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
             ),
           ],
         ),

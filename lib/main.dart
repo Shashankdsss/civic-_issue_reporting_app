@@ -30,6 +30,7 @@ void main() async {
 
 class CivicIssueApp extends StatelessWidget {
   final String initialRoute;
+  
   const CivicIssueApp({super.key, required this.initialRoute});
 
   @override

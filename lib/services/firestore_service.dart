@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FirestoreService {
-  static const String baseUrl = 'http://10.0.2.2:5000/api';
+  static const String baseUrl = 'https://shashank.hungercat.in/api';
 
   // ── CIVIC ISSUE REPORTS ────────────────────────────────────────────────────
 
@@ -12,16 +13,25 @@ class FirestoreService {
   }
 
   static Future<String> insertReportAndGetId(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+
     final response = await http.post(
       Uri.parse('$baseUrl/reports'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
       body: jsonEncode(data),
     );
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       final body = jsonDecode(response.body);
-      return body['id'];
+      // Mongo usually returns _id instead of id
+      return body['_id'] ?? (body['id'] ?? '');
     } else {
-      throw Exception('Failed to insert report');
+      throw Exception(
+        'Failed to insert report: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -58,31 +68,49 @@ class FirestoreService {
     );
   }
 
-  static Future<void> updateReportStatusWithTimestamp(String id, String newStatus) async {
+  static Future<void> updateReportStatusWithTimestamp(
+    String id,
+    String newStatus,
+  ) async {
     await updateReportStatus(id, newStatus);
   }
 
-  static Future<void> toggleUpvote(String id, bool currentStatus, int currentUpvotes) async {
+  static Future<void> toggleUpvote(
+    String id,
+    bool currentStatus,
+    int currentUpvotes,
+  ) async {
     await http.post(Uri.parse('$baseUrl/reports/$id/upvote'));
   }
 
   // STUBS FOR NON-MIGRATED FEATURES FOR BACKWARDS COMPATIBILITY
   // Depending on how much of the app uses these, we might need actual Node routes or just local mock DB
-  
-  static Future<List<Map<String, dynamic>>> getReportsByCategory(String category) async {
+
+  static Future<List<Map<String, dynamic>>> getReportsByCategory(
+    String category,
+  ) async {
     final all = await getReports();
     return all.where((element) => element['category'] == category).toList();
   }
 
-  static Future<void> updateReportFeedback(String id, int rating, String message) async {}
+  static Future<void> updateReportFeedback(
+    String id,
+    int rating,
+    String message,
+  ) async {}
 
-  static Map<String, dynamic> computeSlaFields(String priority, [DateTime? now]) {
+  static Map<String, dynamic> computeSlaFields(
+    String priority, [
+    DateTime? now,
+  ]) {
     final base = now ?? DateTime.now();
     const int days = 10;
     return {
       'submittedAt': base.toIso8601String(),
       'slaDays': days,
-      'expectedResolutionDate': base.add(const Duration(days: days)).toIso8601String(),
+      'expectedResolutionDate': base
+          .add(const Duration(days: days))
+          .toIso8601String(),
       'expectedStages': {
         'Verified': base.add(const Duration(days: 1)).toIso8601String(),
         'In Progress': base.add(const Duration(days: 5)).toIso8601String(),
@@ -91,7 +119,12 @@ class FirestoreService {
     };
   }
 
-  static Future<void> addComment(String reportId, String userId, String userName, String message) async {}
+  static Future<void> addComment(
+    String reportId,
+    String userId,
+    String userName,
+    String message,
+  ) async {}
 
   static Stream<List<Map<String, dynamic>>> getCommentsStream(String reportId) {
     return Stream.value([]);
@@ -99,19 +132,36 @@ class FirestoreService {
 
   static Future<void> followUser(String myUid, String targetUid) async {}
   static Future<void> unfollowUser(String myUid, String targetUid) async {}
-  static Future<List<String>> getFollowingUids(String myUid) async { return []; }
-  static Future<bool> isFollowing(String myUid, String targetUid) async { return false; }
-  static Future<List<Map<String, dynamic>>> getAllUsers() async { return []; }
+  static Future<List<String>> getFollowingUids(String myUid) async {
+    return [];
+  }
+
+  static Future<bool> isFollowing(String myUid, String targetUid) async {
+    return false;
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllUsers() async {
+    return [];
+  }
 
   static Future<void> insertNotification(String title, String message) async {}
-  static Future<List<Map<String, dynamic>>> getNotifications() async { return []; }
+  static Future<List<Map<String, dynamic>>> getNotifications() async {
+    return [];
+  }
+
   static Future<void> markNotificationRead(String id) async {}
   static Future<void> deleteNotification(String id) async {}
-  static Future<int> getUnreadNotificationCount() async { return 0; }
+  static Future<int> getUnreadNotificationCount() async {
+    return 0;
+  }
+
   static Future<void> clearAllNotifications() async {}
-  
+
   static Future<void> insertAccident(Map<String, dynamic> data) async {}
-  static Future<List<Map<String, dynamic>>> getAccidents() async { return []; }
+  static Future<List<Map<String, dynamic>>> getAccidents() async {
+    return [];
+  }
+
   static Future<void> deleteAccident(String id) async {}
   static Future<void> clearAllAccidents() async {}
   static Future<void> clearAllReports() async {}

@@ -281,8 +281,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -411,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Personal Information',
-                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                             if (!_isEditing)
                               TextButton.icon(
                                 onPressed: () => setState(() => _isEditing = true),
@@ -462,7 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         // ── ACCOUNT INFO ──
                         Text('Account Information',
-                            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                         const SizedBox(height: 12),
                         _buildInfoCard([
                           _buildInfoRow(Icons.calendar_today_outlined, 'Member Since', _formatDate(_userDetails?['createdAt'])),
@@ -481,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(tr('App Preferences'),
-                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                               const SizedBox(height: 12),
                               _buildInfoCard([
                                 _buildActionRow(Icons.inventory_2_outlined, tr('My Drafts (Offline)'), '', () => Navigator.pushNamed(context, '/drafts')),
@@ -494,14 +496,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ]),
                               const SizedBox(height: 24),
                               Text(tr('Support & About'),
-                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                               const SizedBox(height: 12),
                               _buildInfoCard([
                                 _buildActionRow(Icons.headset_mic_outlined, tr('Help & Support'), '', () => Navigator.pushNamed(context, '/chat')),
                                 const Divider(height: 1),
-                                _buildActionRow(Icons.shield_outlined, tr('Privacy Policy'), '', () {}),
+                                _buildActionRow(Icons.shield_outlined, tr('Privacy Policy'), '', () => _showPolicyDialog("Privacy Policy", "1. Data Collection: We collect location data and photos to help resolve civic issues.\n2. Usage: Your data is only used for reporting issues to local authorities.\n3. Security: Your personal data (like Aadhaar) is encrypted.\n\nWe do not sell your data.", isDark)),
                                 const Divider(height: 1),
-                                _buildActionRow(Icons.info_outline, tr('Terms of Service'), '', () {}),
+                                _buildActionRow(Icons.info_outline, tr('Terms of Service'), '', () => _showPolicyDialog("Terms of Service", "1. By using CivicConnect, you agree to submit truthful reports.\n2. Do not spam or submit inappropriate content.\n3. We reserve the right to ban accounts violating these terms.\n4. Service is provided as-is without any warranties.", isDark)),
                               ]),
                             ],
                           ),
@@ -539,11 +541,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildStatCard(String value, String label, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(color: color.withValues(alpha: 0.12), blurRadius: 12, offset: const Offset(0, 4)),
@@ -553,8 +556,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-            Text(label, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
+            Text(value, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+            Text(label, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 10, color: isDark ? Colors.white70 : Colors.grey[500])),
           ],
         ),
       ),
@@ -562,24 +565,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoCard(List<Widget> children) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(children: children),
     );
   }
 
   Widget _buildEditRow(IconData icon, String label, TextEditingController controller, TextInputType keyboardType) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: const Color(0xFF3B82F6), size: 18),
           ),
           const SizedBox(width: 14),
@@ -587,12 +592,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
+                Text(label, style: GoogleFonts.poppins(fontSize: 11, color: isDark ? Colors.white70 : Colors.grey[500])),
                 const SizedBox(height: 4),
                 TextField(
                   controller: controller,
                   keyboardType: keyboardType,
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B)),
                   decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
@@ -608,13 +613,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, {bool sensitive = false, Color? valueColor}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: const Color(0xFF3B82F6), size: 18),
           ),
           const SizedBox(width: 14),
@@ -622,10 +628,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
+                Text(label, style: GoogleFonts.poppins(fontSize: 11, color: isDark ? Colors.white70 : Colors.grey[500])),
                 Text(
                   sensitive ? '${value.substring(0, value.length > 8 ? value.length - 4 : 0)}****' : value,
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? const Color(0xFF1E293B)),
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? (isDark ? Colors.white : const Color(0xFF1E293B))),
                 ),
               ],
             ),
@@ -637,18 +643,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSwitchRow(IconData icon, String label, bool value, Function(bool) onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: const Color(0xFF475569), size: 18),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: isDark ? Colors.white70 : const Color(0xFF475569), size: 18),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B))),
+            child: Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B))),
           ),
           Switch(
             value: value,
@@ -661,6 +668,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildActionRow(IconData icon, String label, String trailingText, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -669,19 +677,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: const Color(0xFF475569), size: 18),
+              decoration: BoxDecoration(color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: isDark ? Colors.white70 : const Color(0xFF475569), size: 18),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B))),
+              child: Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B))),
             ),
             if (trailingText.isNotEmpty)
-              Text(trailingText, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600)),
+              Text(trailingText, style: GoogleFonts.poppins(fontSize: 11, color: isDark ? Colors.white70 : Colors.grey[600], fontWeight: FontWeight.w600)),
             if (trailingText.isNotEmpty) const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            Icon(Icons.chevron_right, color: isDark ? Colors.white54 : Colors.grey, size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPolicyDialog(String title, String content, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+        content: SingleChildScrollView(
+          child: Text(content, style: GoogleFonts.poppins(color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3B82F6),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Got it'),
+          ),
+        ],
       ),
     );
   }

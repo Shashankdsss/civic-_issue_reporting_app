@@ -8,7 +8,7 @@ class CustomUser {
 }
 
 class FirebaseAuthService {
-  static const String baseUrl = 'https://shashank.hungercat.in/api';
+  static const String baseUrl = 'http://10.0.2.2:5000/api';
   static CustomUser? _currentUser;
   
   static CustomUser? get currentUser => _currentUser;
@@ -40,12 +40,8 @@ class FirebaseAuthService {
       }),
     );
     if (response.statusCode != 201) {
-      try {
-        final body = jsonDecode(response.body);
-        throw Exception(body['error'] ?? 'Registration failed.');
-      } catch (_) {
-        throw Exception('Registration failed: ${response.statusCode} - ${response.body}');
-      }
+      final body = jsonDecode(response.body);
+      throw Exception(body['error'] ?? 'Registration failed.');
     }
   }
 
@@ -71,12 +67,8 @@ class FirebaseAuthService {
       _currentUser = CustomUser(userId);
       return _currentUser;
     } else {
-       try {
-         final body = jsonDecode(response.body);
-         throw Exception(body['error'] ?? 'Login failed.');
-       } catch (_) {
-         throw Exception('Login failed: ${response.statusCode} - ${response.body}');
-       }
+       final body = jsonDecode(response.body);
+       throw Exception(body['error'] ?? 'Login failed.');
     }
   }
 
