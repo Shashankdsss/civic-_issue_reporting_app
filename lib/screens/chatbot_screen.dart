@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// IMPORTANT: Replace this with your actual Gemini API Key from Google AI Studio
-const String geminiApiKey = 'AIzaSyBiZwsaK3te5T2qNpCxPX94OFItUnXYTXM';
+// IMPORTANT: The key is now safely stored in the .env file
+String get geminiApiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
 
 class ChatMessage {
   final String text;

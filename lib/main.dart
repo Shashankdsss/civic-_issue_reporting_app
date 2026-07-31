@@ -14,10 +14,18 @@ import 'screens/admin_dashboard_screen.dart';
 import 'services/notification_service.dart';
 import 'utils/global_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
+  
+  // Try loading .env but don't crash if it's missing
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("No .env file found or empty. Using fallbacks.");
+  }
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
