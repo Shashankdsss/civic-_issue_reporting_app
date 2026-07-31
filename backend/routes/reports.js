@@ -48,7 +48,7 @@ router.post('/', auth, async (req, res) => {
 // Get all reports
 router.get('/', async (req, res) => {
   try {
-    const reports = await Report.find().sort({ createdAt: -1 }).populate('userId', 'firstName lastName');
+    const reports = await Report.find().sort({ createdAt: -1 });
     res.json(reports);
   } catch (err) {
     console.error(err);
