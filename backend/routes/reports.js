@@ -22,14 +22,18 @@ const auth = (req, res, next) => {
 // Create a new report
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, description, location, severity, imageUrl } = req.body;
+    const { category, description, latitude, longitude, priority, imagePath, department, mediaType, userName } = req.body;
     
     const newReport = new Report({
-      title,
+      category,
       description,
-      location,
-      severity,
-      imageUrl,
+      latitude,
+      longitude,
+      priority,
+      imagePath,
+      mediaType,
+      assignedDepartment: department,
+      userName,
       userId: req.user.id
     });
     
