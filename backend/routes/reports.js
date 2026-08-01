@@ -83,4 +83,20 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+// Update Upvotes
+router.post('/:id/upvote', auth, async (req, res) => {
+  try {
+    const { upvotes } = req.body;
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      { $set: { upvotes: Math.max(0, upvotes) } },
+      { new: true }
+    );
+    res.json(report);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 module.exports = router;

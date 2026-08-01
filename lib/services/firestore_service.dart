@@ -40,7 +40,13 @@ class FirestoreService {
       final response = await http.get(Uri.parse('$baseUrl/reports'));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data.cast<Map<String, dynamic>>();
+        return data.map((e) {
+          final map = Map<String, dynamic>.from(e);
+          map['id'] = map['_id'] ?? (map['id'] ?? '');
+          final created = (map['createdAt'] ?? map['timestamp'] ?? '').toString();
+          map['timestamp'] = created.length >= 16 ? created : DateTime.now().toIso8601String();
+          return map;
+        }).toList();
       }
     } catch (e) {
       print('Network error fetching reports: \$e');
@@ -48,7 +54,14 @@ class FirestoreService {
     return [];
   }
 
-  static Stream<List<Map<String, dynamic>>> getReportsStream() async* {
+  static Stream<List<Map<String, dynamic>>>? _cachedReportsStream;
+
+  static Stream<List<Map<String, dynamic>>> getReportsStream() {
+    _cachedReportsStream ??= _createReportsStream().asBroadcastStream();
+    return _cachedReportsStream!;
+  }
+
+  static Stream<List<Map<String, dynamic>>> _createReportsStream() async* {
     // Basic polling mechanism to simulate Stream snapshot
     while (true) {
       yield await getReports();
@@ -80,7 +93,16 @@ class FirestoreService {
     bool currentStatus,
     int currentUpvotes,
   ) async {
-    await http.post(Uri.parse('$baseUrl/reports/$id/upvote'));
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    await http.post(
+      Uri.parse('$baseUrl/reports/$id/upvote'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'upvotes': currentUpvotes}),
+    );
   }
 
   // STUBS FOR NON-MIGRATED FEATURES FOR BACKWARDS COMPATIBILITY
@@ -124,10 +146,38 @@ class FirestoreService {
     String userId,
     String userName,
     String message,
-  ) async {}
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    await http.post(
+      Uri.parse('$baseUrl/community/comments'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'reportId': reportId,
+        'userName': userName,
+        'message': message,
+      }),
+    );
+  }
 
-  static Stream<List<Map<String, dynamic>>> getCommentsStream(String reportId) {
-    return Stream.value([]);
+  static Stream<List<Map<String, dynamic>>> getCommentsStream(String reportId) async* {
+    while (true) {
+      try {
+        final response = await http.get(Uri.parse('$baseUrl/community/comments/$reportId'));
+        if (response.statusCode == 200) {
+          final List<dynamic> data = jsonDecode(response.body);
+          yield data.cast<Map<String, dynamic>>();
+        } else {
+          yield [];
+        }
+      } catch (e) {
+        yield [];
+      }
+      await Future.delayed(const Duration(seconds: 3));
+    }
   }
 
   static Future<void> followUser(String myUid, String targetUid) async {}
