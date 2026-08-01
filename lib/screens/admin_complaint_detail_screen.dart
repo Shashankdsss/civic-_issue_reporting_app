@@ -13,6 +13,7 @@ class _AdminComplaintDetailScreenState extends State<AdminComplaintDetailScreen>
   late String _status;
   late String _department;
   late TextEditingController _remarksController;
+  late TextEditingController _slaDaysController;
   DateTime? _selectedDate;
   bool _isLoading = false;
 
@@ -28,6 +29,8 @@ class _AdminComplaintDetailScreenState extends State<AdminComplaintDetailScreen>
     
     _department = widget.report['assignedDepartment'] ?? '';
     _remarksController = TextEditingController(text: widget.report['adminRemarks'] ?? '');
+    final int? existingSla = widget.report['slaDays'];
+    _slaDaysController = TextEditingController(text: existingSla != null ? existingSla.toString() : '');
     
     if (widget.report['targetCompletionDate'] != null) {
       _selectedDate = DateTime.parse(widget.report['targetCompletionDate']);
@@ -51,12 +54,32 @@ class _AdminComplaintDetailScreenState extends State<AdminComplaintDetailScreen>
 
   Future<void> _updateReport() async {
     setState(() => _isLoading = true);
+    int? slaDays;
+    DateTime? expectedResDate = _selectedDate;
+    Map<String, dynamic>? expectedStages;
+
+    final daysText = _slaDaysController.text.trim();
+    if (daysText.isNotEmpty) {
+      slaDays = int.tryParse(daysText);
+      if (slaDays != null) {
+        final now = DateTime.now();
+        expectedResDate = now.add(Duration(days: slaDays));
+        expectedStages = {
+          'Verified': now.add(const Duration(days: 1)).toIso8601String(),
+          'In Progress': now.add(Duration(days: (slaDays / 2).ceil())).toIso8601String(),
+          'Resolved': expectedResDate.toIso8601String(),
+        };
+      }
+    }
+
     try {
       await AdminService.updateReport(
         widget.report['_id'],
         _status,
         _department,
-        _selectedDate?.toIso8601String(),
+        expectedResDate?.toIso8601String(),
+        slaDays,
+        expectedStages,
         _remarksController.text,
       );
       if (!mounted) return;
@@ -111,6 +134,18 @@ class _AdminComplaintDetailScreenState extends State<AdminComplaintDetailScreen>
               decoration: const InputDecoration(labelText: 'Assigned Department', border: OutlineInputBorder()),
               items: departments.map((d) => DropdownMenuItem(value: d, child: Text(d.isEmpty ? 'None' : d))).toList(),
               onChanged: (v) => setState(() => _department = v!),
+            ),
+            const SizedBox(height: 16),
+            
+            TextField(
+              controller: _slaDaysController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Allocate SLA (Days)',
+                hintText: 'e.g. 7',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.timer_rounded),
+              ),
             ),
             const SizedBox(height: 16),
             

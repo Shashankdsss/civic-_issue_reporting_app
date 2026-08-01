@@ -210,8 +210,9 @@ class StatusTrackingScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ── Resolution ETA Banner ──
-          if (deadline != null) _buildEtaBanner(deadline, slaDays, status),
-          if (deadline != null) const SizedBox(height: 16),
+          if (deadline != null) _buildEtaBanner(deadline, slaDays, status)
+          else _buildPendingEtaBanner(),
+          const SizedBox(height: 16),
           const SizedBox(height: 14),
 
           // ── Progress Bar ──
@@ -488,6 +489,44 @@ class StatusTrackingScreen extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: textColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingEtaBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 26),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pending Admin Allocation',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  'Timeline will be updated shortly',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFF334155),
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
         ],

@@ -9,7 +9,7 @@ class CustomUser {
 }
 
 class FirebaseAuthService {
-  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
+  static const String baseUrl = 'http://192.168.2.96:3016/api';
   static CustomUser? _currentUser;
   
   static CustomUser? get currentUser => _currentUser;

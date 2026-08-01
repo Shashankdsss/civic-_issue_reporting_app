@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminService {
-  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
+  static const String baseUrl = 'http://192.168.2.96:3016/api';
 
   static Future<List<dynamic>> fetchAllReports() async {
     final prefs = await SharedPreferences.getInstance();
@@ -29,6 +29,8 @@ class AdminService {
       String? status, 
       String? department, 
       String? dateString, 
+      int? slaDays,
+      Map<String, dynamic>? expectedStages,
       String? remarks) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
@@ -37,6 +39,8 @@ class AdminService {
     if (status != null) body['status'] = status;
     if (department != null) body['assignedDepartment'] = department;
     if (dateString != null) body['targetCompletionDate'] = dateString;
+    if (slaDays != null) body['slaDays'] = slaDays;
+    if (expectedStages != null) body['expectedStages'] = expectedStages;
     if (remarks != null) body['adminRemarks'] = remarks;
 
     final response = await http.put(

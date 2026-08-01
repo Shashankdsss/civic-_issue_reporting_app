@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FirestoreService {
-  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
+  static const String baseUrl = 'http://192.168.2.96:3016/api';
 
   // ── CIVIC ISSUE REPORTS ────────────────────────────────────────────────────
 
@@ -196,13 +196,43 @@ class FirestoreService {
 
   static Future<void> insertNotification(String title, String message) async {}
   static Future<List<Map<String, dynamic>>> getNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications'),
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((e) {
+          final map = Map<String, dynamic>.from(e);
+          map['id'] = map['_id'] ?? map['id'];
+          return map;
+        }).toList();
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+    }
     return [];
   }
 
-  static Future<void> markNotificationRead(String id) async {}
+  static Future<void> markNotificationRead(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    try {
+      await http.patch(
+        Uri.parse('$baseUrl/notifications/$id/read'),
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      );
+    } catch (e) {
+      print('Error marking notification read: $e');
+    }
+  }
   static Future<void> deleteNotification(String id) async {}
   static Future<int> getUnreadNotificationCount() async {
-    return 0;
+    final notifs = await getNotifications();
+    return notifs.where((n) => n['isRead'] == false).length;
   }
 
   static Future<void> clearAllNotifications() async {}

@@ -404,10 +404,7 @@ class _ReportScreenState extends State<ReportScreen> {
           'priority': 'Low',
         };
 
-        // 5. Compute SLA fields
-        final sla = FirestoreService.computeSlaFields(selectedSeverity!);
-
-        // 6. Save to Database (with department, user identity, and SLA)
+        // 6. Save to Database (with department, user identity - without SLA)
         final currentUser = FirebaseAuthService.currentUser;
         final userDetails = await FirebaseAuthService.getCurrentUserDetails();
         final now = DateTime.now();
@@ -431,26 +428,9 @@ class _ReportScreenState extends State<ReportScreen> {
           'feedbackMessage': '',
           'userId': currentUser?.uid ?? 'anonymous',
           'userName': userDetails?['name'] ?? 'A Citizen',
-          ...sla,
         });
 
-        // 6b. Schedule deadline reminder notifications
-        final int slaDays = sla['slaDays'] as int;
-        // Notify 2 days before deadline (or day 1 for High-priority 3-day SLA)
-        final int reminderDelay = ((slaDays - 2).clamp(1, slaDays - 1)) * 86400;
-        await NotificationService.scheduleOSNotification(
-          id: reportId.hashCode & 0x7FFFFFFF,
-          title: '⏰ Resolution Reminder',
-          body: 'Your $selectedCategory report has ${slaDays == 3 ? '1 day' : '2 days'} left for resolution.',
-          delaySeconds: reminderDelay,
-        );
-        // Notify on deadline day
-        await NotificationService.scheduleOSNotification(
-          id: (reportId.hashCode & 0x7FFFFFFF) + 1,
-          title: '📅 Resolution Deadline Today',
-          body: 'Today is the resolution deadline for your $selectedCategory report. Tap to track.',
-          delaySeconds: slaDays * 86400,
-        );
+
 
         // 6c. Start automatic status progression
         StatusSimulationService.startProgression(reportId, selectedCategory!);
@@ -465,8 +445,6 @@ class _ReportScreenState extends State<ReportScreen> {
         _showSuccessSheet(
           dept: deptInfo,
           priority: selectedSeverity!,
-          expectedResolutionDate: DateTime.parse(sla['expectedResolutionDate'] as String),
-          slaDays: slaDays,
         );
       }
     } catch (e) {
@@ -484,16 +462,10 @@ class _ReportScreenState extends State<ReportScreen> {
   void _showSuccessSheet({
     required Map<String, String> dept,
     required String priority,
-    required DateTime expectedResolutionDate,
-    required int slaDays,
   }) {
     final Color priorityColor = priority == 'High'
         ? const Color(0xFFE11D48)
         : (priority == 'Medium' ? const Color(0xFFD97706) : const Color(0xFF059669));
-    final String formattedDeadline =
-        DateFormat('EEEE, MMM d, yyyy').format(expectedResolutionDate);
-    final int daysLeft =
-        expectedResolutionDate.difference(DateTime.now()).inDays;
 
     showModalBottomSheet(
       context: context,
@@ -558,10 +530,10 @@ class _ReportScreenState extends State<ReportScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.calendar_month_rounded,
+                      const Icon(Icons.info_outline_rounded,
                           color: Color(0xFF38BDF8), size: 18),
                       const SizedBox(width: 8),
-                      Text('Expected Resolution',
+                      Text('Pending Admin Allocation',
                           style: GoogleFonts.poppins(
                               color: const Color(0xFF94A3B8),
                               fontSize: 12,
@@ -569,49 +541,25 @@ class _ReportScreenState extends State<ReportScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(formattedDeadline,
+                  Text('Timeline will be updated shortly',
                       style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Days countdown
-                      Row(
-                        children: [
-                          const Icon(Icons.hourglass_bottom_rounded,
-                              color: Color(0xFFFBBF24), size: 15),
-                          const SizedBox(width: 5),
-                          Text(
-                            daysLeft <= 0
-                                ? 'Due today'
-                                : '$daysLeft day${daysLeft == 1 ? '' : 's'} remain',
-                            style: GoogleFonts.poppins(
-                                color: const Color(0xFFFBBF24),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                      // Priority badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: priorityColor.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border:
-                              Border.all(color: priorityColor.withValues(alpha: 0.5)),
-                        ),
-                        child: Text('$priority Priority · $slaDays-day SLA',
-                            style: GoogleFonts.poppins(
-                                color: priorityColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: priorityColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: priorityColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Text('$priority Priority',
+                        style: GoogleFonts.poppins(
+                            color: priorityColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -628,12 +576,14 @@ class _ReportScreenState extends State<ReportScreen> {
                       color: const Color(0xFF64748B))),
             ),
             const SizedBox(height: 10),
+            _nextStep(Icons.admin_panel_settings_rounded, const Color(0xFF8B5CF6),
+                'Admin reviews your report and allocates timeline'),
             _nextStep(Icons.verified_rounded, const Color(0xFF3B82F6),
-                'Day 1 — Officials visit and verify your report'),
+                'Officials visit and verify your report'),
             _nextStep(Icons.engineering_rounded, const Color(0xFFD97706),
-                'Day ${(slaDays / 2).ceil()} — Repair / maintenance work begins'),
+                'Repair / maintenance work begins'),
             _nextStep(Icons.check_circle_rounded, const Color(0xFF059669),
-                'Day $slaDays — Issue resolved & you are notified'),
+                'Issue resolved & you are notified'),
             const SizedBox(height: 22),
 
             // ── Actions ──

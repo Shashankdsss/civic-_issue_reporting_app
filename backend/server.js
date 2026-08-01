@@ -21,6 +21,7 @@ const authRoutes = require('./routes/auth');
 const reportRoutes = require('./routes/reports');
 const communityRoutes = require('./routes/community');
 const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Basic health check route
 app.get('/api/health', (req, res) => {
