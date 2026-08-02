@@ -33,6 +33,7 @@ router.put('/reports/:id', authAdmin, async (req, res) => {
 
     // Check if SLA was just allocated
     const isNewAllocation = (slaDays !== undefined && expectedStages !== undefined && !report.slaDays);
+    const isResolving = (status === 'Resolved' && report.status !== 'Resolved');
 
     // Only update fields that were provided in the request
     if (status) report.status = status;
@@ -50,6 +51,18 @@ router.put('/reports/:id', authAdmin, async (req, res) => {
         userId: report.userId,
         title: "SLA Timeline Allocated",
         message: `An admin has reviewed your ${report.category} report and allocated a ${slaDays}-day timeline. Expected resolution is on ${new Date(targetCompletionDate).toLocaleDateString()}.`,
+        reportId: report._id
+      });
+    }
+
+    // Distribute rewards if newly resolving
+    if (isResolving) {
+      const rewardPoints = 2500;
+      await User.findByIdAndUpdate(report.userId, { $inc: { civicPoints: rewardPoints } });
+      await Notification.create({
+        userId: report.userId,
+        title: "Reward Credited! 💸",
+        message: `₹250 has been credited to your Civic Wallet for your resolved ${report.category} issue!`,
         reportId: report._id
       });
     }

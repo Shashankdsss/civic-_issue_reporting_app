@@ -13,7 +13,10 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date, default: null },
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   role: { type: String, enum: ['citizen', 'admin'], default: 'citizen' },
-  department: { type: String, default: '' }
+  department: { type: String, default: '' },
+  civicPoints: { type: Number, default: 0 },
+  bankAccount: { type: String, default: '' },
+  ifscCode: { type: String, default: '' }
 }, {
   timestamps: true
 });

@@ -7,13 +7,11 @@ import 'package:path/path.dart' as p;
 import '../services/location_service.dart';
 import '../services/firestore_service.dart';
 import '../services/image_validation_service.dart';
-import '../services/notification_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:native_exif/native_exif.dart';
 import '../services/draft_service.dart';
 import '../services/firebase_auth_service.dart';
-import '../services/status_simulation_service.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -430,11 +428,6 @@ class _ReportScreenState extends State<ReportScreen> {
           'userName': userDetails?['name'] ?? 'A Citizen',
         });
 
-
-
-        // 6c. Start automatic status progression
-        StatusSimulationService.startProgression(reportId, selectedCategory!);
-
         await FirestoreService.insertNotification("New Report Submitted", "Your report regarding $selectedCategory has been submitted and forwarded to ${deptInfo['abbr']}.");
 
         if (_draftReport != null) {
@@ -502,13 +495,13 @@ class _ReportScreenState extends State<ReportScreen> {
                   color: Color(0xFF059669), size: 40),
             ),
             const SizedBox(height: 12),
-            Text('Report Submitted!',
+            Text('Complaint submitted successfully',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1E293B))),
-            const SizedBox(height: 4),
-            Text('Forwarded to ${dept['abbr'] ?? 'Municipal Authority'}',
+            Text('Awaiting Admin Review',
                 style: GoogleFonts.poppins(
                     fontSize: 13, color: const Color(0xFF64748B))),
             const SizedBox(height: 20),

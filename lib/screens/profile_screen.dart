@@ -238,7 +238,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _photoOptionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  void _showFullScreenAvatar() {
+    if (_profileImagePath == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.file(File(_profileImagePath!), fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _photoOptionButton({required IconData icon, required String label, required Color color, required void Function() onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -308,11 +342,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           // ── TAPPABLE AVATAR ──
-                          GestureDetector(
-                            onTap: _showPhotoOptions,
-                            child: Stack(
-                              children: [
-                                Container(
+                          Stack(
+                            children: [
+                              GestureDetector(
+                                onTap: _profileImagePath != null ? _showFullScreenAvatar : _showPhotoOptions,
+                                child: Container(
                                   width: 95,
                                   height: 95,
                                   decoration: BoxDecoration(
@@ -346,10 +380,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         )
                                       : null,
                                 ),
-                                // Camera badge
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
+                              ),
+                              // Camera badge
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _showPhotoOptions,
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
@@ -360,8 +397,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -390,6 +427,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ── CIVIC WALLET CARD ──
+                        _buildCivicWalletCard(),
+                        const SizedBox(height: 24),
+
                         // ── STATS ROW ──
                         Row(
                           children: [
@@ -715,6 +756,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Got it'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCivicWalletCard() {
+    final points = _userDetails?['civicPoints'] ?? 0;
+    final rupeeValue = points / 10.0;
+    final bankSaved = (_userDetails?['bankAccount']?.toString().isNotEmpty ?? false);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFFCD34D)]),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFFF59E0B).withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Government Civic Wallet', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              const Icon(Icons.account_balance_wallet, color: Colors.white),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Available Balance', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('₹${rupeeValue.toStringAsFixed(0)}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32)),
+              const SizedBox(width: 8),
+              Text('($points Points)', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFFF59E0B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => _showWithdrawDialog(bankSaved, rupeeValue),
+              child: Text('Withdraw to Bank Account', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showWithdrawDialog(bool bankSaved, double balance) {
+    if (balance <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Your wallet balance is empty. Resolve civic issues to earn money!')));
+      return;
+    }
+    
+    final accCtrl = TextEditingController(text: _userDetails?['bankAccount'] ?? '');
+    final ifscCtrl = TextEditingController(text: _userDetails?['ifscCode'] ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 20, right: 20, top: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Withdraw Funds', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: accCtrl,
+              decoration: const InputDecoration(labelText: 'Bank Account Number', border: OutlineInputBorder()),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ifscCtrl,
+              decoration: const InputDecoration(labelText: 'IFSC Code', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (accCtrl.text.isEmpty || ifscCtrl.text.isEmpty) {
+                    return;
+                  }
+                  await FirebaseAuthService.updateBankDetails(accCtrl.text, ifscCtrl.text);
+                  
+                  // Update local UI state
+                  if (mounted) {
+                    setState(() {
+                      if (_userDetails != null) {
+                         _userDetails!['bankAccount'] = accCtrl.text;
+                         _userDetails!['ifscCode'] = ifscCtrl.text;
+                      }
+                    });
+                  }
+                  
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Withdrawal initiated! ₹Funds will reflect in 3-5 business days.'), backgroundColor: Colors.green)
+                    );
+                  }
+                },
+                child: Text('Confirm Withdrawal', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

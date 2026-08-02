@@ -179,7 +179,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           Text(notif['message'], style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[700])),
                           const SizedBox(height: 5),
                           Text(
-                            notif['timestamp'].toString().substring(0, 16),
+                            (notif['timestamp']?.toString() ?? '').length >= 16 
+                                ? notif['timestamp'].toString().substring(0, 16) 
+                                : notif['timestamp']?.toString() ?? '',
                             style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500]),
                           ),
                         ],

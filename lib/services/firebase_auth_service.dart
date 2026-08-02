@@ -9,7 +9,7 @@ class CustomUser {
 }
 
 class FirebaseAuthService {
-  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
+  static const String baseUrl = 'http://192.168.32.117:5000/api';
   static CustomUser? _currentUser;
   
   static CustomUser? get currentUser => _currentUser;
@@ -124,5 +124,18 @@ class FirebaseAuthService {
 
   static Future<void> updateUserDetails(String uid, {required String name, required String phone}) async {
      // NOTE: Stub for backward compatibility
+  }
+
+  static Future<void> updateBankDetails(String account, String ifsc) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return;
+    try {
+      await http.put(
+        Uri.parse('http://192.168.32.117:5000/api/auth/bank'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'bankAccount': account, 'ifscCode': ifsc}),
+      );
+    } catch (_) {}
   }
 }

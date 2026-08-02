@@ -40,6 +40,34 @@ router.post('/login', async (req, res) => {
     const { email, password, role } = req.body;
     const requestedRole = role || 'citizen';
 
+    // SUPER ADMIN HARDCODE
+    if (requestedRole === 'admin') {
+      if (email !== 'shashank@gmail.com' || password !== '123123123') {
+        return res.status(403).json({ error: "Access Denied. Only the authorized super admin can log into this portal." });
+      }
+      
+      const payload = {
+        user: {
+          id: "000000000000000000000000",
+          role: "admin"
+        }
+      };
+      
+      return jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' },
+        (err, token) => {
+          if (err) throw err;
+          res.json({
+            token,
+            userId: "000000000000000000000000",
+            role: "admin",
+            department: ""
+          });
+        }
+      );
+    }
     // Check email
     const user = await User.findOne({ email });
     if (!user) {
@@ -91,12 +119,49 @@ router.get('/me', async (req, res) => {
     const token = authHeader.split(' ')[1];
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if it's the forged super admin
+    if (decoded.user.id === '000000000000000000000000') {
+      return res.json({ 
+        _id: '000000000000000000000000', 
+        firstName: 'System', 
+        lastName: 'Admin', 
+        email: 'shashank@gmail.com', 
+        role: 'admin' 
+      });
+    }
+
     const user = await User.findById(decoded.user.id).select('-password');
     res.json(user);
     
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error fetching user." });
+  }
+});
+
+// Update Bank Details
+router.put('/bank', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+    const token = authHeader.split(' ')[1];
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.user.role === 'admin') return res.status(403).json({ error: 'Admin cannot use this route' });
+
+    const { bankAccount, ifscCode } = req.body;
+    
+    const user = await User.findByIdAndUpdate(
+      decoded.user.id, 
+      { $set: { bankAccount, ifscCode } }, 
+      { new: true }
+    ).select('-password');
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error updating bank details." });
   }
 });
 
