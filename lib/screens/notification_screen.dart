@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
+import 'status_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -186,8 +187,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ),
                         ],
                       ),
-                      onTap: () {
-                        if (!isRead) _markAsRead(notif['id']);
+                      onTap: () async {
+                        if (!isRead) {
+                          _markAsRead(notif['id']);
+                        }
+                        
+                        if (notif['reportId'] != null) {
+                          showDialog(context: context, barrierDismissible: false, builder: (ctx) => const Center(child: CircularProgressIndicator()));
+                          try {
+                            final report = await FirestoreService.getReportById(notif['reportId']);
+                            if (report != null && mounted) {
+                              Navigator.pop(context); // close dialog
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => StatusTrackingScreen(report: report)));
+                            } else {
+                              if (mounted) Navigator.pop(context);
+                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report not found or deleted')));
+                            }
+                          } catch (e) {
+                            if (mounted) Navigator.pop(context);
+                          }
+                        }
                       },
                     ),
                   ),

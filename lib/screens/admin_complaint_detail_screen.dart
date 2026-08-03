@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 import '../services/admin_service.dart';
 
 class AdminComplaintDetailScreen extends StatefulWidget {
@@ -150,6 +151,30 @@ class _AdminComplaintDetailScreenState extends State<AdminComplaintDetailScreen>
             Text(report['description'] ?? 'No Description'),
             const SizedBox(height: 8),
             Row(children: [const Icon(Icons.location_on, size: 16), const SizedBox(width: 4), Expanded(child: Text(report['location'] ?? ''))]),
+            
+            if (report['imagePath'] != null && report['imagePath'].toString().trim().isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text("Attached Media", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: report['imagePath'].toString().startsWith('http')
+                  ? Image.network(
+                      report['imagePath'],
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(width: double.infinity, height: 150, color: Colors.grey[200], child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 50))),
+                    )
+                  : Image.file(
+                      File(report['imagePath']),
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(width: double.infinity, height: 150, color: Colors.grey[200], child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 50))),
+                    ),
+              ),
+            ],
             
             if (report['latitude'] != null && report['longitude'] != null) ...[
               const SizedBox(height: 16),

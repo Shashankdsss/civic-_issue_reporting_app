@@ -99,4 +99,16 @@ router.post('/:id/upvote', auth, async (req, res) => {
   }
 });
 
+// Get a single report by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+    if (!report) return res.status(404).json({ error: "Report not found" });
+    res.json(report);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 module.exports = router;

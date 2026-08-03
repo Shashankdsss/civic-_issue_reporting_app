@@ -229,6 +229,26 @@ class FirestoreService {
       print('Error marking notification read: $e');
     }
   }
+
+  static Future<Map<String, dynamic>?> getReportById(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/reports/$id'),
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        data['id'] = data['_id'] ?? data['id'];
+        return data;
+      }
+    } catch (e) {
+      print('Error fetching report by id: $e');
+    }
+    return null;
+  }
+
   static Future<void> deleteNotification(String id) async {}
   static Future<int> getUnreadNotificationCount() async {
     final notifs = await getNotifications();
