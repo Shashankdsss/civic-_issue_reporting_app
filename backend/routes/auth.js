@@ -165,4 +165,37 @@ router.put('/bank', async (req, res) => {
   }
 });
 
+// Update Profile Details
+router.put('/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+    const token = authHeader.split(' ')[1];
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.user.role === 'admin') return res.status(403).json({ error: 'Admin cannot use this route' });
+
+    const { name, phone } = req.body;
+    
+    let firstName = name;
+    let lastName = "";
+    if (name && name.includes(' ')) {
+      const parts = name.split(' ');
+      firstName = parts[0];
+      lastName = parts.slice(1).join(' ');
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      decoded.user.id, 
+      { $set: { firstName, lastName, phone } }, 
+      { new: true }
+    ).select('-password');
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error updating profile details." });
+  }
+});
+
 module.exports = router;

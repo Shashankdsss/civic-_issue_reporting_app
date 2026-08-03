@@ -109,6 +109,7 @@ class FirebaseAuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         data['uid'] = data['_id'];
+        data['name'] = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
         
         if (_currentUser == null) {
           final uid = prefs.getString('user_id');
@@ -123,7 +124,21 @@ class FirebaseAuthService {
   }
 
   static Future<void> updateUserDetails(String uid, {required String name, required String phone}) async {
-     // NOTE: Stub for backward compatibility
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return;
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'name': name, 'phone': phone}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update profile');
+      }
+    } catch (_) {
+      rethrow;
+    }
   }
 
   static Future<void> updateBankDetails(String account, String ifsc) async {

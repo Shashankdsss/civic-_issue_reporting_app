@@ -28,7 +28,7 @@ class StatusTrackingScreen extends StatelessWidget {
         (data['statusHistory'] as Map<String, dynamic>?) ?? {};
     final Map<String, dynamic> expectedStages =
         (data['expectedStages'] as Map<String, dynamic>?) ?? {};
-    final String? rawDeadline = data['expectedResolutionDate'] as String?;
+    final String? rawDeadline = (data['targetCompletionDate'] ?? data['expectedResolutionDate']) as String?;
     final int slaDays = (data['slaDays'] as int?) ?? 7;
     DateTime? deadline;
     try { deadline = rawDeadline != null ? DateTime.parse(rawDeadline) : null; } catch (_) {}
@@ -191,9 +191,9 @@ class StatusTrackingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        (data['department'] != null &&
-                                data['department'].toString().isNotEmpty)
-                            ? data['department']
+                        (data['assignedDepartment'] != null &&
+                                data['assignedDepartment'].toString().isNotEmpty)
+                            ? data['assignedDepartment']
                             : 'Municipal Authority',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
@@ -207,6 +207,42 @@ class StatusTrackingScreen extends StatelessWidget {
               ],
             ),
           ),
+          
+          if (data['adminRemarks'] != null && data['adminRemarks'].toString().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD97706).withAlpha(38), // 0.15 opacity
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.comment, size: 22, color: Color(0xFFD97706)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Admin Remarks", style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFD97706), fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(data['adminRemarks'], style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF1E293B), fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
           const SizedBox(height: 16),
 
           // ── Resolution ETA Banner ──
