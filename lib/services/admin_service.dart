@@ -20,7 +20,7 @@ class AdminService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load reports');
+      throw Exception('Failed to load reports. Server returned ${response.statusCode}: ${response.body}');
     }
   }
 

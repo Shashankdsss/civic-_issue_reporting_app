@@ -210,11 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: _isLoading
-            ? Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: IgnorePointer(child: _buildMainScrollContent()),
-              )
+            ? const Center(child: CircularProgressIndicator())
             : _buildMainScrollContent(),
       ),
     );
