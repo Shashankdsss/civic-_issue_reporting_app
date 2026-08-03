@@ -74,12 +74,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             itemCount: reports.length,
             itemBuilder: (context, index) {
               final report = reports[index];
+              
+              String formattedDate = '';
+              if (report['createdAt'] != null) {
+                try {
+                  final dt = DateTime.parse(report['createdAt']).toLocal();
+                  formattedDate = "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+                } catch (_) {}
+              }
+              
+              String severity = (report['severity'] ?? 'LOW').toString().toUpperCase();
+              Color severityColor = Colors.green;
+              if (severity == 'HIGH' || severity == 'CRITICAL') severityColor = Colors.red;
+              else if (severity == 'MEDIUM') severityColor = Colors.orange;
+
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
-                  title: Text(report['title'] ?? 'No Title', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("${report['location']} \nReported by: ${report['userId']?['firstName'] ?? 'Unknown'}"),
+                  title: Row(
+                    children: [
+                      Text(report['category'] ?? 'Issue Report', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(width: 8),
+                      // Severity badge 
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: severityColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: severityColor.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(severity, style: TextStyle(fontSize: 9, color: severityColor, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(formattedDate, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 4),
+                      Text("Reported by ${report['userId']?['firstName'] ?? 'Citizen'} ${report['userId']?['lastName'] ?? ''}", style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
                   isThreeLine: true,
                   trailing: Chip(
                     label: Text(report['status'] ?? 'Pending', style: const TextStyle(color: Colors.white, fontSize: 12)),

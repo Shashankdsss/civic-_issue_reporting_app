@@ -9,7 +9,7 @@ class CustomUser {
 }
 
 class FirebaseAuthService {
-  static const String baseUrl = 'http://192.168.32.117:5000/api';
+  static const String baseUrl = 'https://civicissue-api.onrender.com/api';
   static CustomUser? _currentUser;
   
   static CustomUser? get currentUser => _currentUser;
@@ -132,7 +132,7 @@ class FirebaseAuthService {
     if (token == null) return;
     try {
       await http.put(
-        Uri.parse('http://192.168.32.117:5000/api/auth/bank'),
+        Uri.parse('https://civicissue-api.onrender.com/api/auth/bank'),
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: jsonEncode({'bankAccount': account, 'ifscCode': ifsc}),
       );
