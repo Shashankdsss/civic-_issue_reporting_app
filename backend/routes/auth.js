@@ -40,16 +40,16 @@ router.post('/login', async (req, res) => {
     const { email, password, role } = req.body;
     const requestedRole = role || 'citizen';
 
-    // SUPER ADMIN HARDCODE
-    if (requestedRole === 'admin') {
-      if (email !== 'shashank@gmail.com' || password !== '123123123') {
-        return res.status(403).json({ error: "Access Denied. Only the authorized super admin can log into this portal." });
+    // SUPER ADMIN ACCOUNTS
+    if (email === 'shashank@gmail.com') {
+      if (password !== '123123123') {
+        return res.status(403).json({ error: "Access Denied. Invalid credentials." });
       }
       
       const payload = {
         user: {
           id: "000000000000000000000000",
-          role: "admin"
+          role: requestedRole
         }
       };
       
@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
           res.json({
             token,
             userId: "000000000000000000000000",
-            role: "admin",
+            role: requestedRole,
             department: ""
           });
         }

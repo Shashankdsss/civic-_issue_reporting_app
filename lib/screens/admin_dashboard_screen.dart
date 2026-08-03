@@ -83,7 +83,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 } catch (_) {}
               }
               
-              String severity = (report['severity'] ?? 'LOW').toString().toUpperCase();
+              String severity = (report['priority'] ?? 'LOW').toString().toUpperCase();
               Color severityColor = Colors.green;
               if (severity == 'HIGH' || severity == 'CRITICAL') severityColor = Colors.red;
               else if (severity == 'MEDIUM') severityColor = Colors.orange;

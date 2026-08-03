@@ -98,6 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     const primaryBlue = Color(0xFF1E40AF); // Deep premium blue for the top bg
     const buttonBlue = Color(0xFF2563EB);  // Slightly brighter blue for buttons
+    
+    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: primaryBlue,
@@ -106,7 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             // ── Top Header Section ───────────────────────────────────────────
-            Expanded(
+            if (!isKeyboardOpen)
+              Expanded(
               flex: 3,
               child: Container(
                 width: double.infinity,
@@ -149,10 +152,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+            
+            if (isKeyboardOpen)
+              const SizedBox(height: 20),
 
             // ── Bottom Sheet Section ─────────────────────────────────────────
             Expanded(
-              flex: 7,
+              flex: isKeyboardOpen ? 1 : 7,
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
