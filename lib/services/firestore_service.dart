@@ -70,7 +70,15 @@ class FirestoreService {
   }
 
   static Future<void> deleteReport(String id) async {
-    await http.delete(Uri.parse('$baseUrl/reports/$id'));
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    await http.delete(
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
   }
 
   static Future<void> updateReportStatus(String id, String newStatus) async {
@@ -264,5 +272,16 @@ class FirestoreService {
 
   static Future<void> deleteAccident(String id) async {}
   static Future<void> clearAllAccidents() async {}
-  static Future<void> clearAllReports() async {}
+  
+  static Future<void> clearAllReports() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    await http.delete(
+      Uri.parse('$baseUrl/reports'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+  }
 }

@@ -111,4 +111,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Delete a single report
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const report = await Report.findByIdAndDelete(req.params.id);
+    if (!report) return res.status(404).json({ error: "Report not found" });
+    res.json({ message: "Report deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+// Delete all reports
+router.delete('/', auth, async (req, res) => {
+  try {
+    await Report.deleteMany({});
+    res.json({ message: "All reports deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 module.exports = router;
