@@ -71,6 +71,9 @@ router.post('/login', async (req, res) => {
 
     // HARDCODED CITIZEN ACCOUNT
     if (email === 'kulalshashank272@gmail.com') {
+      if (requestedRole === 'admin') {
+        return res.status(403).json({ error: "Account does not have admin privileges." });
+      }
       if (password !== 's123@#') {
         return res.status(403).json({ error: "Access Denied. Invalid credentials." });
       }
@@ -109,11 +112,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
 
+    if (requestedRole === 'admin' && user.role !== 'admin') {
+      return res.status(403).json({ error: "Account does not have admin privileges." });
+    }
+
     // Create JWT
     const payload = {
       user: {
         id: user.id,
-        role: requestedRole
+        role: requestedRole === 'admin' ? 'admin' : user.role // Only grant admin if requested AND authorized
       }
     };
 
