@@ -50,7 +50,7 @@ class FirebaseAuthService {
     }
   }
 
-  static Future<CustomUser?> loginUser(String email, String password, String requestedRole) async {
+  static Future<CustomUser?> loginUser(String email, String password, String requestedRole, {String? passkey}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
@@ -58,6 +58,7 @@ class FirebaseAuthService {
         'email': email,
         'password': password,
         'role': requestedRole,
+        if (passkey != null) 'passkey': passkey,
       }),
     );
     if (response.statusCode == 200) {

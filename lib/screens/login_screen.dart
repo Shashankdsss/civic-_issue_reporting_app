@@ -13,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  final TextEditingController _passkeyController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   String _selectedRole = 'Citizen'; // Default role
@@ -27,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passController.dispose();
+    _passkeyController.dispose();
     super.dispose();
   }
 
@@ -53,11 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() async {
     final email = _emailController.text.trim();
     final pass = _passController.text.trim();
+    final passkey = _passkeyController.text.trim();
 
-    if (email.isEmpty || pass.isEmpty) {
+    if (email.isEmpty || pass.isEmpty || (_selectedRole == 'Admin' && passkey.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please enter both email and password"),
+          content: const Text("Please fill all required fields"),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
         ),
@@ -68,7 +71,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = await FirebaseAuthService.loginUser(email, pass, _selectedRole.toLowerCase());
+      final user = await FirebaseAuthService.loginUser(
+        email, 
+        pass, 
+        _selectedRole.toLowerCase(),
+        passkey: _selectedRole == 'Admin' ? passkey : null,
+      );
       if (!mounted) return;
 
       if (user != null) {
@@ -263,6 +271,39 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      if (_selectedRole == 'Admin') ...[
+                        Text(
+                          "Admin Passkey",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _passkeyController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            hintText: "Enter the admin passkey",
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            prefixIcon: Icon(Icons.security, color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
 
                       // ── Role Selection ──
                       Text(

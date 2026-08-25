@@ -37,13 +37,13 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, passkey } = req.body;
     const requestedRole = role || 'citizen';
 
     // SUPER ADMIN ACCOUNTS
     if (email === 'shashank@gmail.com') {
-      if (password !== '123123123') {
-        return res.status(403).json({ error: "Access Denied. Invalid credentials." });
+      if (password !== '123123123' || passkey !== 'ysofunny') {
+        return res.status(403).json({ error: "Access Denied. Invalid credentials or passkey." });
       }
       
       const payload = {
@@ -63,6 +63,35 @@ router.post('/login', async (req, res) => {
             token,
             userId: "000000000000000000000000",
             role: requestedRole,
+            department: ""
+          });
+        }
+      );
+    }
+
+    // HARDCODED CITIZEN ACCOUNT
+    if (email === 'kulalshashank272@gmail.com') {
+      if (password !== 's123@#') {
+        return res.status(403).json({ error: "Access Denied. Invalid credentials." });
+      }
+      
+      const payload = {
+        user: {
+          id: "111111111111111111111111",
+          role: 'citizen'
+        }
+      };
+      
+      return jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' },
+        (err, token) => {
+          if (err) throw err;
+          res.json({
+            token,
+            userId: "111111111111111111111111",
+            role: 'citizen',
             department: ""
           });
         }
@@ -128,6 +157,17 @@ router.get('/me', async (req, res) => {
         lastName: 'Admin', 
         email: 'shashank@gmail.com', 
         role: 'admin' 
+      });
+    }
+
+    // Check if it's the forged citizen
+    if (decoded.user.id === '111111111111111111111111') {
+      return res.json({ 
+        _id: '111111111111111111111111', 
+        firstName: 'Shashank', 
+        lastName: 'Kulal', 
+        email: 'kulalshashank272@gmail.com', 
+        role: 'citizen' 
       });
     }
 
