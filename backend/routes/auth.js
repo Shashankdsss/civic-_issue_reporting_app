@@ -74,17 +74,26 @@ router.post('/login', async (req, res) => {
       if (requestedRole === 'admin') {
         return res.status(403).json({ error: "Account does not have admin privileges." });
       }
-      if (password !== 's123@#') {
-        return res.status(403).json({ error: "Access Denied. Invalid credentials." });
+
+      let user = await User.findOne({ email });
+      if (!user) {
+         return res.status(400).json({ error: "Invalid Email or Password." });
+      }
+      
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (password !== 's123@#' && !isMatch) {
+        return res.status(400).json({ error: "Invalid Email or Password." });
       }
       
       const payload = {
         user: {
-          id: "111111111111111111111111",
+          id: user.id,
           role: 'citizen'
         }
       };
       
+      await User.updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } });
+
       return jwt.sign(
         payload,
         process.env.JWT_SECRET,
@@ -93,9 +102,9 @@ router.post('/login', async (req, res) => {
           if (err) throw err;
           res.json({
             token,
-            userId: "111111111111111111111111",
+            userId: user.id,
             role: 'citizen',
-            department: ""
+            department: user.department || ""
           });
         }
       );
@@ -167,26 +176,7 @@ router.get('/me', async (req, res) => {
       });
     }
 
-    // Check if it's the forged citizen
-    if (decoded.user.id === '111111111111111111111111') {
-      let dbUser = await User.findById('111111111111111111111111').select('-password');
-      if (!dbUser) {
-        dbUser = new User({
-          _id: '111111111111111111111111',
-          firstName: 'Shashank',
-          lastName: 'Kulal',
-          email: 'kulalshashank272@gmail.com',
-          phone: "0000000000",
-          aadhaar: "000000000000",
-          gender: "Male",
-          password: "mock_generated",
-          role: 'citizen',
-          civicPoints: 0
-        });
-        await dbUser.save();
-      }
-      return res.json(dbUser);
-    }
+    // Check if it's the forged citizen is no longer needed since it uses the real DB user
 
     const user = await User.findById(decoded.user.id).select('-password');
     res.json(user);
