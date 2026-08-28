@@ -169,13 +169,23 @@ router.get('/me', async (req, res) => {
 
     // Check if it's the forged citizen
     if (decoded.user.id === '111111111111111111111111') {
-      return res.json({ 
-        _id: '111111111111111111111111', 
-        firstName: 'Shashank', 
-        lastName: 'Kulal', 
-        email: 'kulalshashank272@gmail.com', 
-        role: 'citizen' 
-      });
+      let dbUser = await User.findById('111111111111111111111111').select('-password');
+      if (!dbUser) {
+        dbUser = new User({
+          _id: '111111111111111111111111',
+          firstName: 'Shashank',
+          lastName: 'Kulal',
+          email: 'kulalshashank272@gmail.com',
+          phone: "0000000000",
+          aadhaar: "000000000000",
+          gender: "Male",
+          password: "mock_generated",
+          role: 'citizen',
+          civicPoints: 0
+        });
+        await dbUser.save();
+      }
+      return res.json(dbUser);
     }
 
     const user = await User.findById(decoded.user.id).select('-password');
