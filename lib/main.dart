@@ -44,12 +44,6 @@ class CivicIssueApp extends StatelessWidget {
   
   const CivicIssueApp({super.key, required this.initialRoute});
 
-  Widget _getInitialWidget() {
-    if (initialRoute == '/login') return const LoginScreen();
-    if (initialRoute == '/admin') return const AdminDashboardScreen();
-    return const MainScreen();
-  }
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -95,8 +89,9 @@ class CivicIssueApp extends StatelessWidget {
                   backgroundColor: Color(0xFF1E293B),
                 ),
               ),
-              home: _getInitialWidget(),
+              initialRoute: initialRoute,
               routes: {
+                '/': (context) => const MainScreen(),
                 '/login': (context) => const LoginScreen(),
                 '/register': (context) => const RegisterScreen(),
                 '/report': (context) => const ReportScreen(),

@@ -14,14 +14,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _passkeyController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
   bool _isLoading = false;
   bool _obscurePassword = true;
   String _selectedRole = 'Citizen'; // Default role
+  String? _savedEmail;
+  String? _savedPass;
+  bool _showSavedSuggestion = false;
 
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
+    _emailFocusNode.addListener(() {
+      setState(() {
+        _showSavedSuggestion = _emailFocusNode.hasFocus && _savedEmail != null && _emailController.text.isEmpty;
+      });
+    });
   }
 
   @override
@@ -29,20 +38,16 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passController.dispose();
     _passkeyController.dispose();
+    _emailFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('saved_email');
-    final savedPass = prefs.getString('saved_pass');
-
-    if (savedEmail != null && savedPass != null) {
-      setState(() {
-        _emailController.text = savedEmail;
-        _passController.text = savedPass;
-      });
-    }
+    setState(() {
+      _savedEmail = prefs.getString('saved_email');
+      _savedPass = prefs.getString('saved_pass');
+    });
   }
 
   Future<void> _saveCredentials(String email, String pass) async {
@@ -60,9 +65,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email.isEmpty || pass.isEmpty || (_selectedRole == 'Admin' && passkey.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please fill all required fields"),
+          content: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Please fill all required fields",
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          elevation: 6,
         ),
       );
       return;
@@ -80,7 +99,57 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (user != null) {
-        await _saveCredentials(email, pass);
+        bool shouldSave = false;
+
+        if (_selectedRole == 'Admin') {
+          shouldSave = false;
+        } else if (_savedEmail == email) {
+          shouldSave = true;
+        } else {
+          // Ask if they want to save credentials before continuing
+          shouldSave = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              title: Text(
+                "Save Login?",
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+              ),
+              content: Text(
+                "Would you like to securely save your login details on this device for next time?",
+                style: GoogleFonts.poppins(color: Colors.grey[700]),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    "Not Now",
+                    style: GoogleFonts.poppins(color: Colors.grey[600], fontWeight: FontWeight.w600),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text("Save", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ) ?? false;
+        }
+
+        if (shouldSave) {
+          await _saveCredentials(email, pass);
+        } else {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('saved_email');
+          await prefs.remove('saved_pass');
+        }
+
         if (!mounted) return;
         if (user.role == 'admin') {
           Navigator.pushReplacementNamed(context, '/admin');
@@ -92,9 +161,23 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  e.toString().replaceAll('Exception: ', ''),
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          elevation: 6,
         ),
       );
     } finally {
@@ -211,7 +294,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: _emailController,
+                        focusNode: _emailFocusNode,
                         keyboardType: TextInputType.emailAddress,
+                        onChanged: (val) {
+                          setState(() {
+                            _showSavedSuggestion = val.isEmpty && _savedEmail != null;
+                          });
+                        },
                         decoration: InputDecoration(
                           hintText: "citizen@example.com",
                           hintStyle: TextStyle(color: Colors.grey[400]),
@@ -229,6 +318,49 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+                      if (_showSavedSuggestion && _savedEmail != null && _selectedRole != 'Admin')
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _emailController.text = _savedEmail!;
+                              _passController.text = _savedPass ?? '';
+                              _showSavedSuggestion = false;
+                              _emailFocusNode.unfocus();
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.account_circle, color: Colors.blue.shade700, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _savedEmail!,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.blue.shade900,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  "Tap to autofill",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.blue.shade600,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 20),
 
                       // ── Password Field ──

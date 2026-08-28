@@ -24,6 +24,21 @@ router.post('/', auth, async (req, res) => {
   try {
     const { category, description, latitude, longitude, priority, imagePath, department, mediaType, userName } = req.body;
     
+    // Duplicate check (~50m radius)
+    const latDelta = 0.00045;
+    const lonDelta = 0.00045;
+    
+    const duplicate = await Report.findOne({
+      category: category,
+      latitude: { $gte: latitude - latDelta, $lte: latitude + latDelta },
+      longitude: { $gte: longitude - lonDelta, $lte: longitude + lonDelta },
+      status: { $ne: 'Resolved' }
+    });
+    
+    if (duplicate) {
+      return res.status(400).json({ error: "Duplicate issue detected. This civic issue has already been reported nearby." });
+    }
+
     const newReport = new Report({
       category,
       description,
@@ -71,11 +86,29 @@ router.get('/my-reports', auth, async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const report = await Report.findByIdAndUpdate(
-      req.params.id,
-      { $set: { status } },
-      { new: true }
-    );
+    const report = await Report.findById(req.params.id);
+    if (!report) return res.status(404).json({ error: "Report not found" });
+
+    // Check if status is transitioning to Resolved
+    if (status === 'Resolved' && report.status !== 'Resolved') {
+      const User = require('../models/User');
+      const Notification = require('../models/Notification');
+      
+      // Increment Civic Wallet points by 10
+      await User.findByIdAndUpdate(report.userId, { $inc: { civicPoints: 10 } });
+      
+      // Send a Notification to the reporter
+      await new Notification({
+        userId: report.userId,
+        title: "Issue Resolved",
+        message: `Your report for ${report.category} has been safely resolved! You earned 10 Civic Points in your wallet.`,
+        reportId: report._id
+      }).save();
+    }
+
+    report.status = status;
+    await report.save();
+
     res.json(report);
   } catch (err) {
     console.error(err);
